@@ -28,6 +28,7 @@ def datos_archivo():
     elif lineNum == 2:
       key = line.strip().upper()
 
+  print(modo,texto,key)
   if len(key) != 4:
     return "La longitud de la clave debe ser 4."
 
