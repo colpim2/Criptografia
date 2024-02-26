@@ -5,13 +5,28 @@
 # @date: 27.02.2024
 
 import fileinput
-import numpy as np
+
+def matriz_ceros(row, col):
+    matriz = []
+    for i in range(row):
+        fila = []
+        for j in range(col):
+            fila.append(0)
+        matriz.append(fila)
+    return matriz
 
 def datos_archivo():
-  for line in fileinput.input():
-    modo = line().strip().upper()
-    texto = line().strip().upper()
-    key = line().strip().upper()
+  modo = []
+  texto = []
+  key = []
+
+  for lineNum, line in enumerate(fileinput.input()):
+    if lineNum == 0:
+      modo = line.strip().upper()
+    elif lineNum == 1:
+      text = line.strip().upper()
+    elif lineNum == 2:
+      key = line.strip().upper()
 
   if len(key) != 4:
     return "La longitud de la clave debe ser 4."
@@ -59,37 +74,98 @@ def validar_obtener_inv(keyMatriz):
   determ = determ % 26    #Se aplica mod 26
 
   #¿Tiene inverso?
-  mul_inv = -1
+  Inv = -1
   for i in range(26):
-    temp_inv = determ * i
-    if temp_inv % 26 == 1:
-      mul_inv = i
+    tempInv = determ * i
+    if tempInv % 26 == 1:
+      Inv = i
       break
     else:
       continue
-  if mul_inv == -1:
+  if Inv == -1:
     raise ValueError("No existe inverso")
 
+  return Inv
 
 def encrypt(texto,key):
+  texto = formato_texto(texto)
+
   #Calcular tamaño de matrices para el texto
   row = 2
   col = int(len(texto) / 2) 
 
   #Matrices en 0
-  textoMatriz = np.zeros((row, col), dtype=int)
-  keyMatriz = np.zeros((2,2) ,dtype=int)
+  textoMatriz = matriz_ceros(row,col)
+  keyMatriz = matriz_ceros(2,2)
 
-
-  texto = formato_texto(texto)
+  #Transformar en matrices
   textoMatriz = texto_a_matriz(texto,textoMatriz)
   keyMatriz = key_a_matriz(key,keyMatriz)
+  Inv = validar_obtener_inv(keyMatriz)
 
-  pass
+  encrypMsg = ""
+  auxCount = int(len(texto)/2)
+
+  for i in range(auxCount):
+    temp1 = ( textoMatriz[0][i] * keyMatriz[0][0] ) + ( textoMatriz[1][i] * keyMatriz[0][1] )
+    encrypMsg += chr((temp1 % 26) + 65)
+    temp2 = ( textoMatriz[0][i] * keyMatriz[1][0] ) + ( textoMatriz[1][i] * keyMatriz[1][1] )
+    encrypMsg += chr((temp2 % 26) + 65)
+
+  return encrypMsg
 
 def decrypt(text,key):
-  pass
+  texto = formato_texto(texto)
+
+  #Calcular tamaño de matrices para el texto
+  row = 2
+  col = int(len(texto) / 2) 
+
+  #Matrices en 0
+  textoMatriz = matriz_ceros(row,col)
+  keyMatriz = matriz_ceros(2,2)
+
+  #Transformar en matrices
+  textoMatriz = texto_a_matriz(texto,textoMatriz)
+  keyMatriz = key_a_matriz(key,keyMatriz)
+  Inv = validar_obtener_inv(keyMatriz)
+  
+  #Conjunta Transpuesta?
+  keyMatriz[0][0], keyMatriz[1][1] = keyMatriz[1][1], keyMatriz[0][0]
+
+  #Cambiar signos
+  keyMatriz[0][1] *= -1
+  keyMatriz[1][0] *= -1
+
+  #Modulo
+  keyMatriz[0][1] = keyMatriz[0][1] % 26
+  keyMatriz[1][0] = keyMatriz[1][0] % 26
+
+  #Multiplicar inversa por conjugada transpuesta
+  for i in range(2):
+      for j in range(2):
+          keyMatriz[i][j] *= Inv
+
+  #Modulo
+  for i in range(2):
+      for j in range(2):
+          keyMatriz[i][j] = keyMatriz[i][j] % 26
+
+  #Desencriptar
+  decryptMsg = ""
+  auxCount = int(len(texto)/2)
+
+  for i in range(auxCount):
+    temp1 = ( textoMatriz[0][i] * keyMatriz[0][0] ) + ( textoMatriz[1][i] * keyMatriz[0][1] )
+    decryptMsg += chr((temp1 % 26) + 65)
+    temp2 = ( textoMatriz[0][i] * keyMatriz[1][0] ) + ( textoMatriz[1][i] * keyMatriz[1][1] )
+    decryptMsg += chr((temp2 % 26) + 65)
+
+  return decryptMsg
 
 def main():
   resultado = datos_archivo()
   print(resultado)
+
+if __name__=="__main__":
+  main()
