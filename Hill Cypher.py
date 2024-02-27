@@ -1,11 +1,17 @@
-# Hill Cypher
-# C = (Text * Key) mod 26
-# D = (Text * Key) inv mod 26 
-# @author: Castillo Montes Pamela
-# @date: 27.02.2024
+"""
+Hill Cypher
 
+Se implementa el algoritmo Hill para la encriptación y desencriptación.
+Encrypt: C = (Text * Key) mod 26
+Decrypt: D = (Text * inv(Key)) mod 26
+
+@author: Castillo Montes Pamela
+@date: 27.02.2024
+"""
+# Importación Bibliotecas
 import fileinput
 
+# Llena una matriz de 0s
 def matriz_ceros(row, col):
     matriz = []
     for i in range(row):
@@ -15,11 +21,16 @@ def matriz_ceros(row, col):
         matriz.append(fila)
     return matriz
 
+# Lee la entrada desde un archivo y realiza encriptación o desencriptación según el modo
 def datos_archivo():
-  modo = []
-  texto = []
-  key = []
+  modo = ""
+  texto = ""
+  key = ""
 
+  modo = input().strip()
+  texto = input().strip()
+  key = input().strip()
+  """
   for lineNum, line in enumerate(fileinput.input()):
     if lineNum == 0:
       modo = line.strip().upper()
@@ -27,44 +38,57 @@ def datos_archivo():
       texto = line.strip().upper()
     elif lineNum == 2:
       key = line.strip().upper()
+  """
+  # Excepción tamaño key
+  #if len(key) != 4:
+  #  raise ValueError("La longitud de la clave debe ser 4.")
 
-  if len(key) != 4:
-    return "La longitud de la clave debe ser 4."
-
+  # Modo encriptar
   if modo == 'C':
     encrypted_text = encrypt(texto, key)
     return encrypted_text
 
-  elif modo == 'D':
+  # Modo desencriptar
+  #elif modo == 'D':
+  else:
     decrypted_text = decrypt(texto, key)
     return decrypted_text
 
-  else:
-    return "Modo no reconocido."
+  # Excepción modo 
+  #else:
+  #  raise ValueError("Modo no reconocido.")
 
+# Si el tamaño del mensaje es impar agrega un X al final
 def formato_texto(texto):
-  #Si el tamaño del mensaje es inpar agrega un X al final
   if len(texto) % 2 != 0:
     texto += 'X'
   return texto
 
+# Convierte el texto en una matriz
 def texto_a_matriz(texto,textoMatriz):
   aux1 = 0
   aux2 = 0
   for i in range(len(texto)):
-    if i % 2 == 0:
-      #Se resta 65 para convertir de Ascii a rango 0-26
-      textoMatriz[0][aux1] = int(ord(texto[i]) - 65)
+    if i % 2 == 0:    # El caracter siguiente lo agrega a la primera fila
+      textoMatriz[0][aux1] = int(ord(texto[i]) - 65)   #Se resta 65 para convertir de Ascii a rango 0-26
       aux1 += 1
-    else:
-      textoMatriz[1][aux2] = int(ord(texto[i]) - 65)
+    else:             # El caracter siguiente lo agrega a la segunda fila
+      textoMatriz[1][aux2] = int(ord(texto[i]) - 65)   #Se resta 65 para convertir de Ascii a rango 0-26
       aux2 += 1
   return textoMatriz
 
+def llave_a_matriz(key,keyMatriz):
+  keyMatriz[0][0] = ord(key[0]) - 65
+  keyMatriz[1][0] = ord(key[1]) - 65
+  keyMatriz[0][1] = ord(key[2]) - 65
+  keyMatriz[1][1] = ord(key[3]) - 65
+  return keyMatriz
+
+# Valida y obtiene la inversa de la key
 def validar_obtener_inv(keyMatriz):
   #Calcular el determinante
-  determ = keyMatriz[0][0] * keyMatriz[1][1] - keyMatriz[0][1] * keyMatriz[1][0]
-  determ = determ % 26    #Se aplica mod 26
+  determ = (keyMatriz[0][0] * keyMatriz[1][1]) - (keyMatriz[0][1] * keyMatriz[1][0])
+  #determ = determ % 26    
 
   #¿Tiene inverso?
   Inv = -1
@@ -73,30 +97,30 @@ def validar_obtener_inv(keyMatriz):
     if tempInv % 26 == 1:
       Inv = i
       break
-    else:
-      continue
-
-  if Inv == -1:
-    raise ValueError("No existe inverso")
+  
+  #if Inv == -1:
+  #  raise ValueError("No existe inverso")
 
   return Inv
 
+#  Encripta el texto
 def encrypt(texto,key):
   texto = formato_texto(texto)
 
-  #Calcular tamaño de matrices para el texto
+  # Calcula el tamaño de las matrices para el texto
   row = 2
   col = int(len(texto) / 2) 
 
-  #Matrices en 0
+  # Inicizaliza las matrices en 0
   textoMatriz = matriz_ceros(row,col)
-  keyMatriz = matriz_ceros(2,2)
+  keyMatriz = [[0, 0], [0, 0]]
 
-  #Transformar en matrices
+  # Transforma el texto en matrices
   textoMatriz = texto_a_matriz(texto,textoMatriz)
-  keyMatriz = texto_a_matriz(key,keyMatriz)
+  keyMatriz = llave_a_matriz(key,keyMatriz)
   Inv = validar_obtener_inv(keyMatriz)
 
+  # Realiza la encriptación
   encrypMsg = ""
   auxCount = int(len(texto)/2)
 
@@ -108,44 +132,45 @@ def encrypt(texto,key):
 
   return encrypMsg
 
+#  Desencripta el texto
 def decrypt(texto,key):
   texto = formato_texto(texto)
 
-  #Calcular tamaño de matrices para el texto
+  # Calcula el tamaño de las matrices para el texto
   row = 2
   col = int(len(texto) / 2) 
 
-  #Matrices en 0
+  # Inicizaliza las matrices en 0
   textoMatriz = matriz_ceros(row,col)
-  keyMatriz = matriz_ceros(2,2)
+  keyMatriz = [[0, 0], [0, 0]]
 
-  #Transformar en matrices
+  # Transforma el texto en matrices
   textoMatriz = texto_a_matriz(texto,textoMatriz)
-  keyMatriz = texto_a_matriz(key,keyMatriz)
+  keyMatriz = llave_a_matriz(key,keyMatriz)
   Inv = validar_obtener_inv(keyMatriz)
   
-  #Conjunta Transpuesta?
+  # Calculo de matriz adjunta
   keyMatriz[0][0], keyMatriz[1][1] = keyMatriz[1][1], keyMatriz[0][0]
 
-  #Cambiar signos
+  # Cambiar signos
   keyMatriz[0][1] *= -1
   keyMatriz[1][0] *= -1
 
-  #Modulo
+  # Modulo
   keyMatriz[0][1] = keyMatriz[0][1] % 26
   keyMatriz[1][0] = keyMatriz[1][0] % 26
 
-  #Multiplicar inversa por conjugada transpuesta
+  # Multiplicar inversa por adjunta
   for i in range(2):
       for j in range(2):
           keyMatriz[i][j] *= Inv
 
-  #Modulo
+  # Modulo
   for i in range(2):
       for j in range(2):
           keyMatriz[i][j] = keyMatriz[i][j] % 26
 
-  #Desencriptar
+  # Realiza la desencriptación
   decryptMsg = ""
   auxCount = int(len(texto)/2)
 
